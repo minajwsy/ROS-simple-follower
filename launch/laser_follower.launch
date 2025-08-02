@@ -1,0 +1,28 @@
+<launch>
+  <group>
+    <!-- LiDAR 센서 토픽 리매핑 -->
+    <node pkg="simple_follower" type="laserTracker.py" name="laserTracker" output="screen">
+      <!-- LIMO의 LiDAR 토픽 이름이 /scan_front 라면 아래와 같이 수정 -->
+      <remap from="/hokuyo_base/scan" to="/scan" />
+      <param name="winSize" value="2" type="int" />
+      <param name="deltaDist" value="0.2" type="double" />
+    </node>
+    
+    <!-- 로봇 제어 명령 토픽 리매핑 -->
+    <node pkg="simple_follower" type="follower.py" name="follower" output="screen">
+      <!-- LIMO의 제어 토픽 이름이 /cmd_vel 이라면 아래와 같이 수정 -->
+      <remap from="/cmd_vel/yolo" to="/cmd_vel" />
+      <!-- switchMode: (if true one button press will change betwenn active, not active. If false the button will have to be kept pressed all the time to be active -->
+      <param name="switchMode" value="True" type="bool" />
+      <!-- maximal speed (angular and linear both), tartet distance: the robot will try to keep this fixed distance -->
+      <param name='maxSpeed' value='0.6' type='double' />
+      <param name='targetDist' value='0.3' type='double' />
+      <!-- index of the button in the buttons field of the joy message from the ps3 controller, that switches active/inactive  -->
+      <param name='controllButtonIndex' value='-4' type='int' />
+      <rosparam ns='PID_controller' command='load' file='$(find simple_follower)/parameters/PID_param.yaml' />
+    </node>
+    
+    <!-- 원본 simple_follower 런치 파일 포함 -->
+  </group>
+</launch>
+

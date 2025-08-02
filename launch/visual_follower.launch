@@ -1,0 +1,37 @@
+<launch>
+  <group>
+    <!-- 로봇 제어 명령 토픽 리매핑 -->
+    <node pkg="simple_follower" type="follower.py" name="follower" output="screen">
+      <param name="switchMode" value="True" type="bool" />
+      <!-- maximal speed (angular and linear both), tartet distance: the robot will try to keep this fixed distance -->
+      <param name='maxSpeed' value='0.4' type='double' />
+      <param name='targetDist' value='2.0' type='double' />
+      <!-- index of the button in the buttons field of the joy message from the ps3 controller, that switches active/inactive  -->
+      <param name='controllButtonIndex' value='-4' type='int' />
+      <rosparam ns='PID_controller' command='load' file='$(find simple_follower)/parameters/PID_param.yaml' />
+       <!-- LIMO의 제어 토픽 이름이 /cmd_vel 이라면 아래와 같이 수정 -->
+       <remap from="/cmd_vel" to="/limo/cmd_vel" />
+    </node>
+    
+    <!-- 카메라 관련 토픽 리매핑 (visual_follower용) -->
+    <node pkg="simple_follower" type="visualTracker.py" name="visual_tracker" output="screen">
+      <rosparam ns='target'>
+        upper : [179, 50, 50]
+        lower : [0, 0, 0]
+      </rosparam>
+      <rosparam ns='pictureDimensions'>
+        <!-- Picture dimensions in pixel -->
+        pictureHeight: 480
+        pictureWidth: 640
+        <!-- Viewing angle of the camera in one direction in Radians -->
+        verticalAngle: 0.43196898986859655
+        horizontalAngle: 0.5235987755982988
+      </rosparam>
+      <remap from="/orbbec_astra/rgb/image_rect_color" to="/camera/rgb/image_rect_color" />
+      <remap from="/orbbec_astra/depth/image" to="/camera/depth/image" />
+    </node>
+    
+    <!-- 원본 simple_follower 런치 파일 포함 -->
+  </group>
+</launch>
+

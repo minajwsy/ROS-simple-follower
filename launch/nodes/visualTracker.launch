@@ -1,0 +1,20 @@
+<launch>
+  <node name='visual_tracker' pkg="simple_follower" type="visualTracker.py">
+    <!-- color or the target in HSV color space -->
+    <rosparam ns='target'>
+      <!-- 최종 안정적인 범위: 거의 모든 밝은 색상 감지 -->
+      lower : [0, 30, 30]
+      upper : [180, 255, 255]
+    </rosparam>
+    <rosparam ns='pictureDimensions'>
+      <!-- Picture dimensions in pixel -->
+      pictureHeight: 480
+      pictureWidth: 640
+      <!-- Viewing angle of the camera in one direction in Radians -->
+      verticalAngle: 0.43196898986859655
+      horizontalAngle: 0.5235987755982988
+    </rosparam>
+    <remap from="/orbbec_astra/rgb/image_rect_color" to="/camera/rgb/image_rect_color" />
+    <remap from="/orbbec_astra/depth/image" to="/camera/depth/image" />
+  </node>
+</launch>
