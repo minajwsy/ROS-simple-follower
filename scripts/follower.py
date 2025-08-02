@@ -47,27 +47,41 @@ class Follower:
 	def positionUpdateCallback(self, position):
 		# gets called whenever we receive a new position. It will then update the motorcomand
 	
-#if(not(self.active)):
-#		if(not(self.active)):
-#			return #if we are not active we will return imediatly without doing anything
-
 		angleX= position.angleX
 		distance = position.distance
 
-		rospy.loginfo('Angle: {}, Distance: {}, '.format(angleX, distance))
+		rospy.loginfo('Angle: {}, Distance: {}, Target Distance: {}'.format(angleX, distance, self.PID_controller.setPoint[1]))
 		
 		# call the PID controller to update it and get new speeds
 		[uncliped_ang_speed, uncliped_lin_speed] = self.PID_controller.update([angleX, distance])
-			
+		
+		# 거리 오차 계산 (디버깅용)
+		distance_error = self.PID_controller.setPoint[1] - distance
+		
+		# 타겟이 후진하는 경우를 더 명확하게 처리
+		# distance_error > 0: 타겟이 가까워짐 → 로봇 후진 필요
+		# distance_error < 0: 타겟이 멀어짐 → 로봇 전진 필요
+		
 		# clip these speeds to be less then the maximal speed specified above
 		angularSpeed = np.clip(-uncliped_ang_speed, -self.max_speed, self.max_speed)
 		linearSpeed  = np.clip(-uncliped_lin_speed, -self.max_speed, self.max_speed)
 		
+		# 후진 동작 개선: 더 부드러운 후진을 위한 최소 속도 보장
+		if distance < self.PID_controller.setPoint[1] * 0.8:  # 목표 거리의 80% 이하로 가까워지면
+			# 강제로 후진하도록 최소 후진 속도 보장
+			if linearSpeed > -0.1:
+				linearSpeed = -0.15
+				
 		# create the Twist message to send to the cmd_vel topic
 		velocity = Twist()	
 		velocity.linear = Vector3(linearSpeed,0,0.)
 		velocity.angular= Vector3(0., 0.,angularSpeed)
-		rospy.loginfo('linearSpeed: {}, angularSpeed: {}'.format(linearSpeed, angularSpeed))
+		
+		# 더 자세한 로그 출력
+		action = "전진" if linearSpeed > 0 else "후진" if linearSpeed < 0 else "정지"
+		rospy.loginfo('Distance Error: {:.3f}, Linear Speed: {:.3f} ({}), Angular Speed: {:.3f}'.format(
+			distance_error, linearSpeed, action, angularSpeed))
+		
 		self.cmdVelPublisher.publish(velocity)
 		
 
